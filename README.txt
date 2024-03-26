@@ -1,5 +1,9 @@
+Introduction
 I selected Flask as it is lightweight and very quick to setup
 I then spent time going over the github REST API and used postman to play around with the API to find the exact data I wanted. 
+Setup:
+1. Open a terminal within the project folder
+2. run "pip install -r requirements.txt" or create a virtual environment using the requirements
 
 There are 3 steps to using this script correct. Those steps are:
 1. Get the statistics

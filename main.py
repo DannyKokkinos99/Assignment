@@ -23,9 +23,9 @@ def get_repo_statistics():
 
         url = f"https://api.github.com/repos/{owner}/{repo}/stats/code_frequency"
         response = requests.get(url, timeout=60)
-        print(response.status_code)
+
         if response.status_code == 202:
-            print("Statistics are being compiled...")  # change to a api return call
+            print("Statistics are being compiled...")
             time.sleep(10)
         elif response.status_code == 200:
             events = response.json()
@@ -54,11 +54,9 @@ def display_results():
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
     query = f"SELECT * FROM Calculations WHERE Owner = '{owner}' AND Repo = '{repo}';"
-    print("HERE IS THE QUERY")
-    print(query)
     cursor.execute(query)
     events = cursor.fetchall()
-    print(events)
+
     return {
         "Owner": events[0][0],
         "Repo": events[0][1],
@@ -91,7 +89,6 @@ def calculate():
         # Execute the insert statement for each set of data
 
         data_to_insert = [(owner, repo, average_addition, average_deletion)]
-        print(data_to_insert)
         cursor.executemany(insert_statement, data_to_insert)
 
         # Commit the transaction
@@ -132,10 +129,8 @@ def write_to_database(owner, repo, dates, additions, deletions):
 
         cursor = conn.cursor()
         # Structure the data
-        query = f"SELECT * FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
         data_to_insert = []
         for i, _ in enumerate(dates):
-            print(i)
             row = (owner, repo, dates[i], additions[i], deletions[i])
             data_to_insert.append(row)
         # SQL statement to insert data into the table
@@ -168,11 +163,7 @@ def extract_data(events, seletion, owner=None,repo=None):
     check_array = []
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
-    print("----------------------------")
-    print(owner)
-    print(repo)
     query = f"SELECT GROUP_CONCAT(DISTINCT Date) FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
-    print(query)
     cursor.execute(query)
     check = cursor.fetchone()
     conn.close()
