@@ -6,11 +6,11 @@ import sqlite3
 from flask import Flask, request
 import requests
 import numpy as np
-
+DATABASE = "database.db"
 app = Flask(__name__)
 
 
-@app.route("/github/get_statistics")
+@app.route("/functions/get_statistics")
 def get_repo_statistics():
     """Gets the statistics for a specific repo then saves it to a database"""
     # Get query parameters
@@ -44,18 +44,15 @@ def get_repo_statistics():
             return {"status": "FAILED", "message": message}, response.status_code
 
 
-@app.route("/average_results")
+@app.route("/functions/average_results")
 def display_results():
     """displays average results to user"""
     # Get query parameters
 
     owner = request.args.get("owner")
     repo = request.args.get("repo")
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
     query = f"SELECT * FROM Calculations WHERE Owner = '{owner}' AND Repo = '{repo}';"
-    cursor.execute(query)
-    events = cursor.fetchall()
+    events = get_query(query)
 
     return {
         "Owner": events[0][0],
@@ -65,7 +62,7 @@ def display_results():
     }
 
 
-@app.route("/calculate")
+@app.route("/functions/calculate")
 def calculate():
     """Calculates the average between events"""
     # Get query parameters
@@ -73,31 +70,17 @@ def calculate():
     owner = request.args.get("owner")
     repo = request.args.get("repo")
     try:
-        conn = sqlite3.connect("database.db")
-        cursor = conn.cursor()
-        # Query to select data from the database for a specific owner and repo
-
         query = f"SELECT * FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
-        cursor.execute(query)
-        events = cursor.fetchall()
+        events = get_query(query)
         dates, additions, deletions = extract_data(events, 1)
         average_addition = calculate_average_duration(additions, dates)
         average_deletion = calculate_average_duration(deletions, dates)
         # SQL statement to insert data into the table
-
         insert_statement = "INSERT INTO Calculations (Owner, Repo, avarage_addition, avarage_deletion) VALUES (?, ?, ?, ?)"
         # Execute the insert statement for each set of data
-
         data_to_insert = [(owner, repo, average_addition, average_deletion)]
-        cursor.executemany(insert_statement, data_to_insert)
+        set_query(insert_statement, data_to_insert)
 
-        # Commit the transaction
-
-        conn.commit()
-
-        # Close the connection
-
-        conn.close()
         message = f"Calculations for {owner}/{repo} complete."
         return {"status": "SUCCESS", "message": message}
     except sqlite3.Error as e:
@@ -122,32 +105,13 @@ def calculate_average_duration(event, dates):
 def write_to_database(owner, repo, dates, additions, deletions):
     """Writes the data to the database"""
     try:
-        # Connect to the SQLite database
-
-        conn = sqlite3.connect("database.db")
-        # Create a cursor object
-
-        cursor = conn.cursor()
-        # Structure the data
         data_to_insert = []
         for i, _ in enumerate(dates):
             row = (owner, repo, dates[i], additions[i], deletions[i])
             data_to_insert.append(row)
         # SQL statement to insert data into the table
-
         insert_statement = "INSERT INTO Data (Owner, Repo, Date, Additions, Deletions) VALUES (?, ?, ?, ?, ?)"
-
-        # Execute the insert statement for each set of data
-
-        cursor.executemany(insert_statement, data_to_insert)
-
-        # Commit the transaction
-
-        conn.commit()
-
-        # Close the connection
-
-        conn.close()
+        set_query(insert_statement, data_to_insert)
         message = "Database connection successful."
         return {"status": "SUCCESS", "message": message}
     except sqlite3.Error as e:
@@ -161,16 +125,12 @@ def extract_data(events, seletion, owner=None,repo=None):
     additions = []
     deletions = []
     check_array = []
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-    query = f"SELECT GROUP_CONCAT(DISTINCT Date) FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
-    cursor.execute(query)
-    check = cursor.fetchone()
-    conn.close()
-    if check and check[0]:
-        check_array.append(check[0].split(','))
 
     if seletion == 0:
+        query = f"SELECT GROUP_CONCAT(DISTINCT Date) FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
+        check = get_query(query,state=1)
+        if check and check[0]: #checks if data is already contained in database and skips row if it is
+            check_array.append(check[0].split(','))
         for index, data in enumerate(events):
             if index == 500:  # exits if events exceed 500
                 break
@@ -204,6 +164,24 @@ def days_between_unix_dates(timestamp1, timestamp2):
 
     return days
 
+def get_query(query,state=0):
+    """Used to get data from a database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    if state==1:
+        events = cursor.fetchone()
+    events = cursor.fetchall()
+    conn.close()
+    return events
+
+def set_query(query, data):
+    """Used to send data to a database"""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.executemany(query, data)
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     app.run(debug=True, port=9000)
