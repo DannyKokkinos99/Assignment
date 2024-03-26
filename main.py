@@ -129,7 +129,7 @@ def extract_data(events, seletion, owner=None,repo=None):
     if seletion == 0:
         query = f"SELECT GROUP_CONCAT(DISTINCT Date) FROM Data WHERE Owner = '{owner}' AND Repo = '{repo}';"
         check = get_query(query,state=1)
-        if check and check[0]: #checks if data is already contained in database and skips row if it is
+        if check and check[0]: #checks if data is already contained in database
             check_array.append(check[0].split(','))
         for index, data in enumerate(events):
             if index == 500:  # exits if events exceed 500
@@ -164,6 +164,7 @@ def days_between_unix_dates(timestamp1, timestamp2):
 
     return days
 
+
 def get_query(query,state=0):
     """Used to get data from a database"""
     conn = sqlite3.connect(DATABASE)
@@ -175,6 +176,7 @@ def get_query(query,state=0):
     conn.close()
     return events
 
+
 def set_query(query, data):
     """Used to send data to a database"""
     conn = sqlite3.connect(DATABASE)
@@ -182,6 +184,7 @@ def set_query(query, data):
     cursor.executemany(query, data)
     conn.commit()
     conn.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=9000)
