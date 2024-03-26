@@ -187,4 +187,4 @@ def set_query(query, data):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=9000)
+    app.run(debug=False, port=9000)
