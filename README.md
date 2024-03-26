@@ -5,11 +5,11 @@ This repository contains my solution to the assignment.
 *   Flask: I selected Flask as my webframework as it is lightweight and easy to setup as the main 
 specification is to complete the assignment within a specific timeframe.
 *   SQLite: I used SQLite as I have experience with it.
-
+## Prerequisites
+Code has been tested on python version 3.8.0 and 3.10.0
 ## Setting up the repository
 1. Open a terminal within the project folder
-2. run "pipenv install -r requirements.txt" or create a virtual environment using the requirements manually
-3. Make sure to select the correct interpreter before running the code
+2. run "pip install -r requirements.txt" or create a virtual environment using the requirements manually
 
 ## Scripts content
 Run "python main.py" to start server then use the endpoinds below
